@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+    laravel:
+        restart: unless-stopped
+        container_name: api
+        build:
+            context: ../
+            dockerfile: ./deploy/Dockerfile
+        # allocate as many volumes as necessary, if needed.
+        env_file:
+            - ../.env
+        ports:
+            - "8000:80"
+        volumes:
+            - ../:/var/www/html/
+            - ../deploy/php/php.ini:/usr/local/etc/php/conf.d/php.ini
+        depends_on:
+            - db
+        networks:
+            - api
+
+    db:
+        container_name: db
+        platform: "linux/amd64"
+        image: mysql:8.4
+        restart: unless-stopped
+        env_file:
+            - ../.env
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+        ports:
+            - "3307:3306"
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - api
+
+volumes:
+    db_data:
+        driver: local
+
+
+networks:
+    api:
+        driver: bridge
